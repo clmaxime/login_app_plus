@@ -1,6 +1,6 @@
-# API de connexion personnelle
+# API de connexion
 
-API REST PHP 8.3+ et SQLite, réalisée selon l’option A du sujet. Aucun framework ni service tiers n’est nécessaire. Extensions PHP : `pdo_sqlite`, `json`, `filter` et `openssl`.
+API REST en PHP 8.3+ avec SQLite, sans framework. Extensions PHP utilisées : `pdo_sqlite`, `json` et `filter`.
 
 ## Exécution locale
 
@@ -15,14 +15,14 @@ php -S localhost:8080 api/router.php
 
 Le serveur de développement est réservé aux essais locaux. En production, l’API refuse les requêtes non HTTPS.
 
-La base est créée dans `api/data/auth.sqlite`, en dehors du dossier public et exclue de Git. `DB_PATH` permet de changer cet emplacement. Le script de démonstration est idempotent : il ne modifie pas les comptes déjà présents.
+La base est créée dans `api/data/auth.sqlite`, hors du dossier public et exclue de Git. `DB_PATH` permet de choisir un autre chemin. Relancer le script conserve les comptes déjà présents.
 
 | Email | Mot de passe de démonstration | Rôle |
 | --- | --- | --- |
 | jean@example.com | userpass | 2 : utilisateur |
 | julie@example.com | adminpass | 1 : administrateur |
 
-Ces comptes sont destinés à l’évaluation. Le serveur conserve uniquement les empreintes bcrypt avec sel aléatoire et coût 12.
+Ces comptes servent aux tests. Les mots de passe sont stockés avec bcrypt, un sel aléatoire et un coût de 12.
 
 ## Contrat
 
@@ -36,7 +36,7 @@ Réussite, HTTP 200, corps exact pour Jean :
 {"status":200,"message":"Success","id":1,"firstName":"Jean","lastName":"Dupont","email":"jean@example.com","role":2}
 ```
 
-Le token est transmis dans l’en-tête de réponse `X-Auth-Token`, ce qui conserve le corps JSON du contrat d’API.
+Le token est envoyé dans l’en-tête de réponse `X-Auth-Token` pour garder le format JSON demandé.
 
 Identifiants invalides, HTTP 400 :
 
@@ -66,6 +66,35 @@ Même authentification Bearer. Révoque le token courant et renvoie HTTP 204 san
 python api/tests/test_api.py
 ```
 
-Python 3 sans bibliothèque supplémentaire suffit. Le test crée une base temporaire, lance un vrai serveur PHP sur un port libre, effectue les requêtes HTTP puis arrête le serveur et nettoie la base. Il n’altère pas les comptes de démonstration du projet.
+Python 3 suffit, sans paquet supplémentaire. La suite lance un serveur PHP sur un port libre avec une base temporaire. Le serveur est arrêté et la base supprimée à la fin. Les comptes du projet ne sont pas modifiés.
 
-18 tests passés le 4 novembre 2026 : contrat exact, deux rôles, JSON/formulaire, validation, injection SQL, taille du corps, routes et méthodes, CORS, accès protégé, expiration, unicité des tokens, stockage des empreintes et révocation. La vérification de production à ce stade porte sur le refus de HTTP ; aucun déploiement TLS réel n’est revendiqué.
+Les 21 tests passent au 4 novembre 2026. Ils couvrent les réponses JSON, les deux comptes, les entrées invalides, les injections SQL, les limites de taille, les routes, CORS et les tokens. Ils vérifient aussi que HTTP est refusé hors du mode développement, même si le client envoie `X-Forwarded-Proto: https`.
+
+## Hébergement HTTPS
+
+### Serveur PHP existant
+
+Configurer la racine du site sur `api/public/`, activer PHP 8.3+ avec PDO SQLite et un certificat TLS valide. Sous Apache, activer `mod_rewrite` et autoriser les règles du fichier `.htaccess` fourni. Les URL `/login`, `/login.php`, `/me` et `/logout` sont alors envoyées au contrôleur PHP.
+
+Configurer `APP_ENV=production`, `CORS_ORIGINS` avec l’origine exacte du site Flutter, et `DB_PATH` avec un chemin SQLite accessible en écriture par PHP, en dehors du dossier public. Lancer `php api/bin/seed.php` avec ce même `DB_PATH` pour créer les comptes de démonstration. Le serveur doit transmettre `HTTPS=on` à PHP pour les requêtes TLS.
+
+### Docker et Caddy, option facultative
+
+Depuis le dossier `api/`, copier `.env.example` vers `.env` et renseigner un nom DNS sans protocole dans `API_DOMAIN`, puis l’origine HTTPS du site Flutter dans `CORS_ORIGINS`. Le domaine doit pointer vers le serveur et les ports 80/443 doivent être disponibles et accessibles. Caddy est configuré pour gérer les certificats et rediriger HTTP vers HTTPS.
+
+```powershell
+cd api
+Copy-Item .env.example .env
+docker compose config --quiet
+docker compose up -d --build
+docker compose exec php php bin/seed.php
+docker compose logs --tail 50
+```
+
+La base et les certificats sont conservés dans des volumes. Ne pas utiliser `docker compose down -v` si ces données doivent être conservées. PHP-FPM n’est pas publié sur un port de l’hôte ; seul Caddy reçoit les requêtes externes.
+
+Avec `API_DOMAIN=localhost`, Caddy utilise un certificat local que le client doit approuver. Son installation automatique dans le magasin de confiance du système est désactivée.
+
+Les configurations Docker/Caddy et Apache n’ont pas encore été testées sur un serveur HTTPS. L’API n’est pas hébergée en ligne.
+
+Documentation des composants : [Caddy et HTTPS](https://caddyserver.com/docs/automatic-https), [PHP-FPM avec Caddy](https://caddyserver.com/docs/caddyfile/directives/php_fastcgi), [image officielle PHP](https://hub.docker.com/_/php).

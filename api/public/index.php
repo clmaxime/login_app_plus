@@ -8,7 +8,7 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 
 try {
-    $production = (getenv('APP_ENV') ?: 'production') === 'production';
+    $production = getenv('APP_ENV') !== 'development';
     if ($production && ($_SERVER['HTTPS'] ?? '') !== 'on') {
         fail(403);
     }

@@ -1,0 +1,12 @@
+{
+    skip_install_trust
+}
+
+https://{$API_DOMAIN:localhost} {
+    root * /srv/api/public
+    php_fastcgi php:9000 {
+        try_files index.php
+        env HTTPS on
+        read_timeout 30s
+    }
+}

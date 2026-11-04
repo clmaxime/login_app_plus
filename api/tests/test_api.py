@@ -156,9 +156,28 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.request('POST', '/login', headers={'Origin': 'https://evil.example'})[0], 403)
 
     def test_production_refuses_plain_http(self):
-        env = dict(os.environ, APP_ENV='production', REQUEST_METHOD='POST', REQUEST_URI='/login')
-        result = subprocess.run([PHP, str(API / 'public/index.php')], env=env, capture_output=True, text=True, check=True)
+        self.assert_http_forbidden('production')
+
+    def test_default_environment_refuses_plain_http(self):
+        self.assert_http_forbidden(None)
+
+    def test_unknown_environment_refuses_plain_http(self):
+        self.assert_http_forbidden('staging')
+
+    def test_forwarded_header_cannot_bypass_https(self):
+        self.assert_http_forbidden('production', HTTP_X_FORWARDED_PROTO='https')
+
+    def assert_http_forbidden(self, app_env, **extra):
+        env = dict(os.environ, REQUEST_METHOD='POST', REQUEST_URI='/login', **extra)
+        env.pop('APP_ENV', None)
+        env.pop('HTTPS', None)
+        if app_env is not None:
+            env['APP_ENV'] = app_env
+        code = 'register_shutdown_function(function(){fwrite(STDERR, (string) http_response_code());}); require $argv[1];'
+        result = subprocess.run([PHP, '-r', code, str(API / 'public/index.php')],
+                                env=env, capture_output=True, text=True, check=True)
         self.assertEqual(json.loads(result.stdout), ERROR)
+        self.assertEqual(result.stderr, '403')
 
 
 if __name__ == '__main__':
