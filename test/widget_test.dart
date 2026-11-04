@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:untitled/main.dart';
 import 'package:untitled/services/auth_service.dart';
+
 import 'support/auth_fixture.dart';
 
 void main() {

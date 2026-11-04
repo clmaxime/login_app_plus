@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_layout.dart';
 
@@ -59,9 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 28),
             Text(
               'Bienvenue.',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.headlineLarge
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
             const Text(
@@ -90,9 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
               autocorrect: false,
               validator: (v) =>
                   v == null ||
-                      !RegExp(
-                        r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-                      ).hasMatch(v.trim()) ||
+                      !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                          .hasMatch(v.trim()) ||
                       v.trim().length > 254
                   ? 'Veuillez entrer un email valide'
                   : null,

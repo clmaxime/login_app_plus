@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../controllers/auth_controller.dart';
 import '../models/user.dart';
 import '../widgets/auth_layout.dart';
@@ -37,9 +38,8 @@ class ProfileScreen extends StatelessWidget {
           Text(
             'Bonjour ${user.firstName}.',
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.headlineMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           const Text(

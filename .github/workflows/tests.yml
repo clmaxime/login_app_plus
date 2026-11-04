@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Installer PHP et SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-sqlite3
+      - name: Installer Flutter
+        run: |
+          git clone --depth 1 --branch 3.47.6 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Installer les dépendances
+        run: flutter pub get
+      - name: Vérifier le format Dart
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Analyser Flutter
+        run: flutter analyze --no-pub
+      - name: Vérifier la syntaxe PHP
+        run: find api -type f -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Tester l’API PHP
+        run: python3 api/tests/test_api.py
+      - name: Tester Flutter et son intégration PHP
+        run: flutter test --no-pub
+      - name: Compiler Flutter Web
+        run: flutter build web --debug --no-pub
