@@ -1,144 +1,154 @@
-// lib/screens/login_screen.dart
-
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart'; // Importez AuthService
-import 'profile_screen.dart'; // Importez ProfileScreen
+import 'package:flutter/services.dart';
+import '../controllers/auth_controller.dart';
+import '../widgets/auth_layout.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, required this.title});
-
-  final String title;
-
+  const LoginScreen({super.key, required this.auth});
+  final AuthController auth;
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>(); // Clé pour le formulaire
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _obscure = true;
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
 
-  final AuthService _authService = AuthService(); // Instanciation d'AuthService
-
-  bool _isLoading = false; // État de chargement
-
-  // Méthode de connexion
-  void _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      String email = _emailController.text.trim();
-      String password = _passwordController.text.trim();
-
-      final user = await _authService.login(email, password);
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (user != null) {
-        // Connexion réussie avec informations supplémentaires
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfileScreen(
-              email: email,
-              firstName: user['firstName'],
-              lastName: user['lastName'],
-              role: user['role'],
-            ),
-          ),
-        );
-      } else {
-        // Connexion échouée
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Erreur'),
-            content: const Text('Email ou mot de passe incorrect'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
+  Future<void> _submit() async {
+    if (widget.auth.busy || !_form.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    await widget.auth.login(_email.text.trim(), _password.text);
+    if (mounted && widget.auth.user != null) {
+      TextInput.finishAutofillContext();
+      _password.clear();
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: SingleChildScrollView( // Ajout de SingleChildScrollView pour la réactivité
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey, // Assignation de la clé au formulaire
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                // Champ Email
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.mail),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    // Validation de l'email
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre email';
-                    }
-                    // Regex simple pour valider l'email
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                      return 'Veuillez entrer un email valide';
-                    }
-                    return null;
-                  },
+  Widget build(BuildContext context) => AuthLayout(
+    child: AutofillGroup(
+      child: Form(
+        key: _form,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 16.0),
-                // Champ Mot de Passe
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.lock),
-                  ),
-                  obscureText: true, // Masquer le texte
-                  validator: (value) {
-                    // Validation du mot de passe
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre mot de passe';
-                    }
-                    if (value.length < 6) {
-                      return 'Le mot de passe doit contenir au moins 6 caractères';
-                    }
-                    return null;
-                  },
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 28,
                 ),
-                const SizedBox(height: 24.0),
-                // Bouton de Connexion ou Indicateur de Chargement
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                  onPressed: _login,
-                  child: const Text('Se connecter'),
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 28),
+            Text(
+              'Bienvenue.',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Connectez-vous pour retrouver votre profil.',
+              style: TextStyle(
+                color: Color(0xFF596760),
+                fontSize: 16,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ErrorNotice(widget.auth.error),
+            TextFormField(
+              controller: _email,
+              enabled: !widget.auth.busy,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.alternate_email),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [
+                AutofillHints.username,
+                AutofillHints.email,
+              ],
+              autocorrect: false,
+              validator: (v) =>
+                  v == null ||
+                      !RegExp(
+                        r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                      ).hasMatch(v.trim()) ||
+                      v.trim().length > 254
+                  ? 'Veuillez entrer un email valide'
+                  : null,
+            ),
+            const SizedBox(height: 18),
+            TextFormField(
+              controller: _password,
+              enabled: !widget.auth.busy,
+              obscureText: _obscure,
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  tooltip: _obscure
+                      ? 'Afficher le mot de passe'
+                      : 'Masquer le mot de passe',
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                  icon: Icon(
+                    _obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+              autofillHints: const [AutofillHints.password],
+              enableSuggestions: false,
+              autocorrect: false,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _submit(),
+              validator: (v) => v == null || v.isEmpty
+                  ? 'Veuillez entrer votre mot de passe'
+                  : null,
+            ),
+            const SizedBox(height: 26),
+            FilledButton(
+              onPressed: widget.auth.busy ? null : _submit,
+              child: widget.auth.busy
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        semanticsLabel: 'Connexion en cours',
+                      ),
+                    )
+                  : const Text('Se connecter'),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Votre mot de passe reste confidentiel.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF596760), fontSize: 12),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
