@@ -119,7 +119,7 @@ void main() {
     await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
       isNull,
     );
     expect(requests, 1);

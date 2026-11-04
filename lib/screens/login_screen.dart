@@ -7,6 +7,7 @@ import '../widgets/auth_layout.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.auth});
   final AuthController auth;
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -16,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _obscure = true;
+
   @override
   void dispose() {
     _email.dispose();
@@ -35,51 +37,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) => AuthLayout(
+    title: 'Connexion',
     child: AutofillGroup(
       child: Form(
         key: _form,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.lock_outline_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 28,
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-            Text(
-              'Bienvenue.',
-              style: Theme.of(context).textTheme.headlineLarge
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
+            const Icon(Icons.person, size: 64, color: Colors.blue),
+            const SizedBox(height: 16),
             const Text(
-              'Connectez-vous pour retrouver votre profil.',
-              style: TextStyle(
-                color: Color(0xFF596760),
-                fontSize: 16,
-                height: 1.5,
-              ),
+              'Bienvenue.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 22),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             ErrorNotice(widget.auth.error),
             TextFormField(
               controller: _email,
               enabled: !widget.auth.busy,
               decoration: const InputDecoration(
                 labelText: 'Email',
-                prefixIcon: Icon(Icons.alternate_email),
+                prefixIcon: Icon(Icons.email),
               ),
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
@@ -88,31 +68,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 AutofillHints.email,
               ],
               autocorrect: false,
-              validator: (v) =>
-                  v == null ||
+              validator: (value) =>
+                  value == null ||
                       !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                          .hasMatch(v.trim()) ||
-                      v.trim().length > 254
+                          .hasMatch(value.trim()) ||
+                      value.trim().length > 254
                   ? 'Veuillez entrer un email valide'
                   : null,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _password,
               enabled: !widget.auth.busy,
               obscureText: _obscure,
               decoration: InputDecoration(
                 labelText: 'Mot de passe',
-                prefixIcon: const Icon(Icons.lock_outline),
+                prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
                   tooltip: _obscure
                       ? 'Afficher le mot de passe'
                       : 'Masquer le mot de passe',
                   onPressed: () => setState(() => _obscure = !_obscure),
                   icon: Icon(
-                    _obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+                    _obscure ? Icons.visibility : Icons.visibility_off,
                   ),
                 ),
               ),
@@ -121,30 +99,24 @@ class _LoginScreenState extends State<LoginScreen> {
               autocorrect: false,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
-              validator: (v) => v == null || v.isEmpty
+              validator: (value) => value == null || value.isEmpty
                   ? 'Veuillez entrer votre mot de passe'
                   : null,
             ),
-            const SizedBox(height: 26),
-            FilledButton(
-              onPressed: widget.auth.busy ? null : _submit,
-              child: widget.auth.busy
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        semanticsLabel: 'Connexion en cours',
-                      ),
-                    )
-                  : const Text('Se connecter'),
-            ),
             const SizedBox(height: 24),
-            const Text(
-              'Votre mot de passe reste confidentiel.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF596760), fontSize: 12),
+            ElevatedButton(
+              onPressed: widget.auth.busy ? null : _submit,
+              child: const Text('Se connecter'),
             ),
+            if (widget.auth.busy)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    semanticsLabel: 'Connexion en cours',
+                  ),
+                ),
+              ),
           ],
         ),
       ),

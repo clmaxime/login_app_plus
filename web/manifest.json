@@ -1,12 +1,12 @@
 {
-    "name": "untitled",
-    "short_name": "untitled",
+    "name": "Application de connexion",
+    "short_name": "Connexion",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#FFFFFF",
+    "theme_color": "#2196F3",
+    "description": "Connexion à votre espace personnel.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

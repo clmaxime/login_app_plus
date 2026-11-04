@@ -10,7 +10,7 @@ Depuis la racine du dépôt, dans PowerShell :
 php api/bin/seed.php
 $env:APP_ENV = 'development'
 $env:CORS_ORIGINS = 'http://localhost:5173'
-php -S localhost:8080 api/router.php
+php -S 127.0.0.1:8080 api/router.php
 ```
 
 Le serveur de développement est réservé aux essais locaux. En production, l’API refuse les requêtes non HTTPS.
