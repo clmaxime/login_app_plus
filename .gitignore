@@ -1,4 +1,8 @@
 # Miscellaneous
+/tmp/
+/api/data/
+/api/.env
+/api/tests/.runtime/
 *.class
 *.log
 *.pyc
