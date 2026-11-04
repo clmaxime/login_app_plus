@@ -1,10 +1,14 @@
 # Connexion Flutter et API PHP
 
-Application de connexion avec affichage du profil et déconnexion. L’API est développée en PHP avec SQLite. Les mots de passe sont hachés avec bcrypt et les sessions utilisent un token.
+Ce projet reprend l’application de connexion Flutter du TP. La connexion passe maintenant par une API PHP avec une base SQLite. Une fois connecté, on retrouve son nom, son email et son rôle sur la page de profil. On peut aussi actualiser le profil et se déconnecter.
+
+Les mots de passe sont hachés avec bcrypt côté serveur. Un token permet de garder la session quand on rouvre l’application.
 
 ## Installation
 
-Outils utilisés : Flutter 3.47.6, Dart 3.13 et PHP 8.3 ou supérieur avec `pdo_sqlite` activé.
+Pour lancer le projet, il faut Flutter et PHP avec l’extension `pdo_sqlite` activée. Le projet a été testé avec Flutter 3.47.6 et Dart 3.13. Pour PHP, utiliser la version 8.3 ou une version plus récente.
+
+Après avoir récupéré le dépôt, installer les dépendances Flutter :
 
 ```sh
 git clone https://github.com/clmaxime/login_app_plus.git
@@ -14,7 +18,7 @@ flutter pub get
 
 ## Lancer l’API
 
-Dans un terminal PowerShell, à la racine du projet :
+Commencer par lancer l’API. Depuis le dossier du projet, dans PowerShell :
 
 ```powershell
 php api/bin/seed.php
@@ -23,7 +27,7 @@ $env:CORS_ORIGINS = 'http://localhost:5173'
 php -S 127.0.0.1:8080 api/router.php
 ```
 
-La base et les comptes de test sont créés dans `api/data/`. Garder ce terminal ouvert.
+La première commande crée la base et les deux comptes de test dans `api/data/`. Il n’y a donc pas de base à importer après le clonage. Laisser ce terminal ouvert pendant les essais.
 
 Sous Linux ou macOS, remplacer les deux lignes `$env:` et le lancement du serveur par :
 
@@ -33,13 +37,13 @@ APP_ENV=development CORS_ORIGINS=http://localhost:5173 php -S 127.0.0.1:8080 api
 
 ## Lancer Flutter
 
-Dans un deuxième terminal, à la racine du projet, avec un émulateur Android démarré :
+Ouvrir un deuxième terminal dans le même dossier. Avec un émulateur Android déjà démarré :
 
 ```sh
 flutter run -d emulator-5554 --dart-define=API_BASE_URL=http://10.0.2.2:8080/
 ```
 
-Si l’identifiant de l’émulateur est différent, utiliser celui affiché par `flutter devices`.
+Si l’émulateur n’a pas cet identifiant, remplacer `emulator-5554` par celui donné par `flutter devices`. L’adresse `10.0.2.2` permet à l’émulateur de joindre l’API sur le PC.
 
 Pour tester dans un navigateur :
 
@@ -47,16 +51,18 @@ Pour tester dans un navigateur :
 flutter run -d web-server --web-hostname localhost --web-port 5173 --dart-define=API_BASE_URL=http://127.0.0.1:8080/
 ```
 
-Ouvrir [http://localhost:5173](http://localhost:5173).
+L’application est ensuite accessible sur [http://localhost:5173](http://localhost:5173).
 
 ## Identifiants de test
 
 - Utilisateur : `jean@example.com` / `userpass`
 - Administrateur : `julie@example.com` / `adminpass`
 
+Pour vérifier rapidement : essayer un mauvais mot de passe, se connecter avec un de ces comptes, puis se déconnecter. On peut aussi rouvrir l’application avant la déconnexion pour vérifier que la session est conservée.
+
 ## Tests
 
-PHP et Python 3 doivent être disponibles dans le PATH.
+Les tests se lancent depuis le dossier du projet. Les commandes `php` et `python` (Python 3) doivent être reconnues dans le terminal.
 
 ```sh
 flutter test
@@ -65,6 +71,6 @@ python api/tests/test_api.py
 
 ## API et vidéo
 
-Le code de l’API est dans `api/`. Son fonctionnement et la configuration HTTPS sont décrits dans [api/README.md](api/README.md). Le lancement local utilise HTTP en développement ; aucun hébergement HTTPS public n’est déployé.
+Le code PHP se trouve dans `api/`. Le [README de l’API](api/README.md) détaille les endpoints et la configuration HTTPS. Pour le moment, l’API se lance sur le PC avec les commandes ci-dessus : elle n’est pas hébergée en ligne. Les essais locaux utilisent HTTP en mode développement.
 
 [Vidéo de démonstration](video.mp4)
